@@ -178,11 +178,12 @@ public class AutoComplete extends SkinnableComponent {
     }
 
     private function onTextInput_Change(e:Event):void {
-        filterItems();
+        filterItems(false);
     }
 
     private function onTextInput_KeyDown(e:KeyboardEvent):void {
 
+        // Handle cases where the popup is open
         if (popup.displayPopUp) {
             switch (e.keyCode) {
                 case Keyboard.UP:
@@ -191,13 +192,22 @@ public class AutoComplete extends SkinnableComponent {
                 case Keyboard.HOME:
                 case Keyboard.PAGE_UP:
                 case Keyboard.PAGE_DOWN:
-                    input.selectRange(text.length, text.length);
                     selectListItem(e);
+                    input.selectRange(text.length, text.length);
                     break;
                 case Keyboard.TAB:
                 case Keyboard.ENTER:
                     selectItem();
                     break;
+            }
+        }
+
+        // Handle cases where the popup is closed
+        if (!popup.displayPopUp) {
+
+            // If user presses (up, down, Ctrl+Space) we force open the popup without having typed anything
+            if (e.keyCode == Keyboard.UP || e.keyCode == Keyboard.DOWN || (e.keyCode == Keyboard.SPACE && e.ctrlKey)) {
+                filterItems(true);
             }
         }
 
@@ -208,11 +218,11 @@ public class AutoComplete extends SkinnableComponent {
 
     }
 
-    private function filterItems():void {
+    private function filterItems(forceOpen:Boolean):void {
 
         _collection.refresh();
 
-        if (input.text.length == 0 || _collection.length == 0) {
+        if ((!forceOpen && input.text.length == 0) || _collection.length == 0) {
             closePopup();
             return;
         }
