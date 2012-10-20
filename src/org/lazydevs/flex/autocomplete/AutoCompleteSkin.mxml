@@ -20,7 +20,7 @@
 
             <s:List id="list" width="100%">
                 <s:layout>
-                    <s:VerticalLayout requestedMinRowCount="1" requestedMaxRowCount="10"/>
+                    <s:VerticalLayout gap="0" requestedMinRowCount="1" requestedMaxRowCount="10"/>
                 </s:layout>
             </s:List>
         </s:Group>
