@@ -40,8 +40,11 @@ public class AutoComplete extends SkinnableComponent {
     private var _dataProvider:IList;
     private var _collection:ListCollectionView = new ListCollectionView();
     private var _itemRenderer:IFactory;
+    private var _labelField:String;
+    private var _labelFunction:Function;
     private var _filterFunction:Function;
     private var _sort:Sort;
+    private var _clearTextAfterSelection:Boolean;
 
     public function get dataProvider():IList {
         return _dataProvider;
@@ -61,6 +64,24 @@ public class AutoComplete extends SkinnableComponent {
         if (list) list.itemRenderer = _itemRenderer;
     }
 
+    public function set labelField(value:String):void {
+        _labelField = value;
+        if (list) list.labelField = _labelField;
+    }
+
+    public function get labelField():String {
+        return _labelField;
+    }
+
+    public function get labelFunction():Function {
+        return _labelFunction;
+    }
+
+    public function set labelFunction(value:Function):void {
+        _labelFunction = value;
+        if (list) list.labelFunction = _labelFunction;
+    }
+
     public function get filterFunction():Function {
         return _filterFunction;
     }
@@ -77,6 +98,14 @@ public class AutoComplete extends SkinnableComponent {
     public function set sort(value:Sort):void {
         _sort = value;
         _collection.sort = _sort;
+    }
+
+    public function get clearTextAfterSelection():Boolean {
+        return _clearTextAfterSelection;
+    }
+
+    public function set clearTextAfterSelection(value:Boolean):void {
+        _clearTextAfterSelection = value;
     }
 
     public function get text():String {
@@ -102,6 +131,12 @@ public class AutoComplete extends SkinnableComponent {
 
             if (_itemRenderer)
                 list.itemRenderer = _itemRenderer;
+
+            if (_labelField)
+                list.labelField = _labelField;
+
+            if (_labelFunction != null)
+                list.labelFunction = _labelFunction;
 
             list.focusEnabled = false;
             list.allowMultipleSelection = false;
@@ -163,12 +198,14 @@ public class AutoComplete extends SkinnableComponent {
                 case Keyboard.ENTER:
                     selectItem();
                     break;
-                case Keyboard.ESCAPE:
-                    input.text = "";
-                    closePopup();
-                    break;
             }
         }
+
+        if (e.keyCode == Keyboard.ESCAPE) {
+            input.text = "";
+            closePopup();
+        }
+
     }
 
     private function filterItems():void {
@@ -182,9 +219,11 @@ public class AutoComplete extends SkinnableComponent {
 
         openPopup();
 
+        // Workaround to select the first item in the list, in case some other item/index was previously selected - the Spark List still ignores setting the selectedIndex before it has validated
         list.invalidateProperties();
         list.validateNow();
         list.selectedIndex = 0;
+
         list.dataGroup.horizontalScrollPosition = 0;
         list.dataGroup.verticalScrollPosition = 0;
     }
@@ -194,19 +233,25 @@ public class AutoComplete extends SkinnableComponent {
         if (_collection.length == 0 || !list.selectedItem)
             return;
 
+        if (clearTextAfterSelection) {
+            input.text = "";
+        } else {
+            input.text = itemToLabel(list.selectedItem);
+            input.selectRange(text.length, text.length);
+        }
+
         var event:AutoCompleteEvent = new AutoCompleteEvent(AutoCompleteEvent.AUTO_COMPLETE_SELECT);
 
         event.item = list.selectedItem;
 
-        input.text = "";
-
         closePopup();
-
         dispatchEvent(event);
     }
 
     private function selectListItem(e:KeyboardEvent):void {
 
+        // NOTE (sissbruecker): This code is taken from the Spark List component itself to handle moving the caret, based on the keyboard events we receive from our text input
+        // NOTE (sissbruecker): Just dispatching the event to the keyboard event to the list won't work as the list ignores the event if a text input has focus
         var navigationUnit:uint = mapKeyCodeForLayoutDirection(e);
 
         if (!NavigationUnit.isNavigationUnit(e.keyCode))
@@ -230,12 +275,27 @@ public class AutoComplete extends SkinnableComponent {
         popup.displayPopUp = false;
     }
 
+    private function itemToLabel(item:*):String {
+
+        if (labelFunction != null) {
+            return labelFunction(item);
+        }
+
+        if (labelField && item && item.hasOwnProperty(labelField)) {
+            return item[labelField];
+        }
+
+        return item != null ? item.toString() : "";
+    }
+
     private function defaultFilterFunction(item:*):Boolean {
 
-        return input.text == null || input.text.length == 0 || item.toString().toLowerCase().indexOf(input.text.toLowerCase()) >= 0;
+        return itemToLabel(item).toString().toLowerCase().indexOf(input.text.toLowerCase()) >= 0;
     }
 
     private function mapKeyCodeForLayoutDirection(event:KeyboardEvent, mapUpDown:Boolean = false):uint {
+
+        // NOTE (sissbruecker): Again taken straight from the Spark List component
 
         var keyCode:uint = event.keyCode;
 
