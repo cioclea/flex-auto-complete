@@ -1,0 +1,7 @@
+/* Add this to your application css file to reference the skin class for the AutoComplete component */
+
+@namespace auotComplete "org.lazydevs.flex.autocomplete.*";
+
+autoComplete|AutoComplete {
+    skinClass: ClassReference("org.lazydevs.flex.autocomplete.AutoCompleteSkin");
+}

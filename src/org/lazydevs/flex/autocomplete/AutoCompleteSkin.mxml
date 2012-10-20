@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx">
+
+    <fx:Metadata>
+    <![CDATA[
+        [HostComponent("org.lazydevs.flex.autocomplete.AutoComplete")]
+        ]]>
+    </fx:Metadata>
+
+    <s:TextInput id="input"
+                 left="0" right="0" top="0" bottom="0"/>
+
+    <s:PopUpAnchor id="popup"
+                   top="0" bottom="0" left="0" right="0"
+                   displayPopUp="false" popUpWidthMatchesAnchorWidth="false" popUpPosition="below">
+
+        <s:List id="list" width="100%">
+            <s:layout>
+                <s:VerticalLayout requestedMinRowCount="1" requestedMaxRowCount="10"/>
+            </s:layout>
+        </s:List>
+
+    </s:PopUpAnchor>
+
+</s:SparkSkin>
