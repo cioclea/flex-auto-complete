@@ -21,6 +21,7 @@ import spark.collections.Sort;
 import spark.components.List;
 import spark.components.PopUpAnchor;
 import spark.components.TextInput;
+import spark.components.supportClasses.ItemRenderer;
 import spark.components.supportClasses.SkinnableComponent;
 import spark.core.NavigationUnit;
 import spark.events.TextOperationEvent;
@@ -170,7 +171,23 @@ public class AutoComplete extends SkinnableComponent {
     }
 
     private function onList_Click(e:Event):void {
-        selectItem();
+
+        // NOTE: List click will also trigger when user clicks on scroll bar - this workaround checks if an item renderer or anything within an item renderer was clicked
+        var isRendererClicked:Boolean = false;
+        var currentTarget:* = e.target;
+
+        while(!isRendererClicked && currentTarget && currentTarget != e.currentTarget) {
+
+            if(currentTarget is ItemRenderer) {
+                isRendererClicked = true;
+            }
+
+            currentTarget = currentTarget.parent;
+        }
+
+        if(isRendererClicked) {
+            selectItem();
+        }
     }
 
     private function onTextInput_FocusOut(e:Event):void {
@@ -192,7 +209,7 @@ public class AutoComplete extends SkinnableComponent {
                 case Keyboard.HOME:
                 case Keyboard.PAGE_UP:
                 case Keyboard.PAGE_DOWN:
-                    selectListItem(e);
+                    moveListSelection(e);
                     input.selectRange(text.length, text.length);
                     break;
                 case Keyboard.TAB:
@@ -258,7 +275,7 @@ public class AutoComplete extends SkinnableComponent {
         dispatchEvent(event);
     }
 
-    private function selectListItem(e:KeyboardEvent):void {
+    private function moveListSelection(e:KeyboardEvent):void {
 
         // NOTE (sissbruecker): This code is taken from the Spark List component itself to handle moving the caret, based on the keyboard events we receive from our text input
         // NOTE (sissbruecker): Just dispatching the event to the keyboard event to the list won't work as the list ignores the event if a text input has focus
